@@ -6,7 +6,6 @@ START=50
 STOP=4
 
 start() {
-
 	# ifb interface for handling ingress on WAN (and VPN interface if wg show reports endpoint)
 	ip link add name ifb-ul type ifb
 	ip link add name ifb-dl type ifb
@@ -20,19 +19,19 @@ start() {
 
 	# capture upload (ingress) on br-lan and br-guest
 	tc filter add dev br-lan parent ffff: protocol ip prio 1 u32 match ip dst 192.168.1.0/24 action pass
-	tc filter add dev br-lan parent ffff: prio 2 matchall action mirred egress redirect dev ifb-ul
+	tc filter add dev br-lan parent ffff: protocol ip prio 2 matchall action mirred egress redirect dev ifb-ul
 	tc filter add dev br-guest parent ffff: protocol ip prio 1 u32 match ip dst 192.168.2.0/24 action pass
-	tc filter add dev br-guest parent ffff: prio 2 matchall action mirred egress redirect dev ifb-ul
+	tc filter add dev br-guest parent ffff: protocol ip prio 2 matchall action mirred egress redirect dev ifb-ul
        	
 	# capture download (egress) on br-lan and br-guest
 	tc filter add dev br-lan parent 1: protocol ip prio 1 u32 match ip src 192.168.1.0/24 action pass
-	tc filter add dev br-lan parent 1: prio 2 matchall action mirred egress redirect dev ifb-dl
+	tc filter add dev br-lan parent 1: protocol ip prio 2 matchall action mirred egress redirect dev ifb-dl
 	tc filter add dev br-guest parent 1: protocol ip prio 1 u32 match ip src 192.168.2.0/24 action pass
-	tc filter add dev br-guest parent 1: prio 2 matchall action mirred egress redirect dev ifb-dl
+	tc filter add dev br-guest parent 1: protocol ip prio 2 matchall action mirred egress redirect dev ifb-dl
 
 	# apply CAKE on the ifbs
-	tc qdisc add dev ifb-dl root cake bandwidth 30Mbit diffserv4 triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms noatm overhead 92
-        tc qdisc add dev ifb-ul root cake bandwidth 25Mbit diffserv4 triple-isolate nonat nowash ingress no-ack-filter split-gso rtt 100ms noatm overhead 92
+	tc qdisc add dev ifb-ul root cake bandwidth 30Mbit besteffort triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms noatm overhead 92
+        tc qdisc add dev ifb-dl root cake bandwidth 25Mbit besteffort triple-isolate nonat nowash ingress no-ack-filter split-gso rtt 100ms noatm overhead 92
 }
 
 stop() {
