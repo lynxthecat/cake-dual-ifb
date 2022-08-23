@@ -1,4 +1,4 @@
-# cake-wg-pbr
+# cake-dual-ifb
 Set up CAKE using ul and dl ifbs
 
 ## Required packages
@@ -7,6 +7,7 @@ This script requires at least the following packages:
 
 - **tc-tiny**
 - **kmod-ifb**
+- **kmod-sched**
 - **kmod-sched-core**
 - **kmod-sched-cake**
 
