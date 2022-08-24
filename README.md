@@ -5,7 +5,7 @@ Set up CAKE using dual upload and download IFBs:
 
 That is, create 'ifb-ul' by mirroring the ingress from br-lan and br-guest and create 'ifb-dl' by mirroring the egress from br-lan and br-guest. And skip out the LAN-LAN traffic. Then apply CAKE on 'ifb-ul' and 'ifb-dl'. 
 
-This permits CAKE to function despite complex setups like use of VPN pbr and a guest LAN.
+This permits CAKE to properly function despite complex setups like use of VPN pbr and a guest LAN.
 
 ## Required packages
 
