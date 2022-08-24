@@ -1,5 +1,7 @@
 # cake-dual-ifb
-Set up CAKE using ul and dl ifbs
+Set up CAKE using ul and dl ifbs:
+
+![image](https://user-images.githubusercontent.com/10721999/186377537-70b37cdf-1d41-419c-9e97-6facfef3e52e.png)
 
 ## Required packages
 
