@@ -9,18 +9,22 @@ start() {
 	# ifb interface for handling ingress on WAN (and VPN interface if wg show reports endpoint)
 	ip link add name ifb-ul type ifb
 	ip link add name ifb-dl type ifb
-        ip link set ifb-ul up
-        ip link set ifb-dl up
+	ip link set ifb-ul up
+	ip link set ifb-dl up
 
-        tc qdisc add dev br-lan handle ffff: ingress
-        tc qdisc add dev br-guest handle ffff: ingress
+	tc qdisc add dev br-lan handle ffff: ingress
+	tc qdisc add dev br-guest handle ffff: ingress
 	tc qdisc add dev br-lan handle 1: root prio
 	tc qdisc add dev br-guest handle 1: root prio
 
 	# capture upload (ingress) on br-lan and br-guest
 	tc filter add dev br-lan parent ffff: protocol ip prio 1 u32 match ip dst 192.168.1.0/24 action pass
+	tc filter add dev br-lan parent ffff: protocol ip prio 1 u32 match ip dst 224.0.0.0/4 action pass
+	tc filter add dev br-lan parent ffff: protocol ip prio 1 u32 match ip dst 255.255.255.255/32 action pass
 	tc filter add dev br-lan parent ffff: protocol ip prio 2 matchall action mirred egress redirect dev ifb-ul
 	tc filter add dev br-guest parent ffff: protocol ip prio 1 u32 match ip dst 192.168.2.0/24 action pass
+	tc filter add dev br-guest parent ffff: protocol ip prio 1 u32 match ip dst 224.0.0.0/4 action pass
+	tc filter add dev br-guest parent ffff: protocol ip prio 1 u32 match ip dst 255.255.255.255/32 action pass
 	tc filter add dev br-guest parent ffff: protocol ip prio 2 matchall action mirred egress redirect dev ifb-ul
        	
 	# capture download (egress) on br-lan and br-guest
@@ -31,7 +35,7 @@ start() {
 
 	# apply CAKE on the ifbs
 	tc qdisc add dev ifb-ul root cake bandwidth 30Mbit besteffort triple-isolate nonat nowash no-ack-filter split-gso rtt 100ms noatm overhead 92
-        tc qdisc add dev ifb-dl root cake bandwidth 25Mbit besteffort triple-isolate nonat nowash ingress no-ack-filter split-gso rtt 100ms noatm overhead 92
+	tc qdisc add dev ifb-dl root cake bandwidth 25Mbit besteffort triple-isolate nonat nowash ingress no-ack-filter split-gso rtt 100ms noatm overhead 92
 }
 
 stop() {
@@ -46,3 +50,4 @@ stop() {
         ip link set ifb-dl down
         ip link del ifb-dl
 } 
+
