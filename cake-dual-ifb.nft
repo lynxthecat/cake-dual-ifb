@@ -1,7 +1,7 @@
 chain cake-dual-ifb {
 
         	type filter hook prerouting priority mangle; policy accept;
-		oifname { br-lan,br-guest } ip dscp set 0
+		iifname { wan,vpn } ip dscp set 0
 		iifname { br-lan,br-guest } meta nfproto ipv4 ct mark set (@nh,8,8 & 252) >> 2 
 		iifname { br-lan,br-guest } meta nfproto ipv6 ct mark set (@nh,0,16 & 4032) >> 6
 		iifname { br-lan,br-guest } ct mark set ct mark or 128	
