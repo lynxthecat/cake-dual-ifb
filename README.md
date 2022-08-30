@@ -63,12 +63,12 @@ To install:
       tcpdump -i ifb-dl -vv udp
    ``` 
    
-If using Microsoft Windows DSCPs can be set at the application level by creating the registry key 'QoS' (it not present) as in:
+If using Microsoft Windows, DSCPs can be set at the application level by creating the registry key 'QoS' (it not present) as in:
 
-HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\QoS
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\QoS\
 
-And then creating the string "Do not use NLA" with value "1"
+And then creating the string "Do not use NLA" inside the QoS key with value "1"
 
-And then by creating QoS policies in the Local Group Policy Editor:
+And then by creating appropriate QoS policies in the Local Group Policy Editor:
 
 ![image](https://user-images.githubusercontent.com/10721999/187462933-78ebdee9-8121-4cad-8547-25b1a397572f.png)
