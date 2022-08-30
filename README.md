@@ -40,7 +40,7 @@ To install:
 - firstly, determine the DSCPs associated with upload packets; and
 - secondly, apply those DSCPs to corresponding download packets associated with the same connection.
  
- This additional requires package:
+ This additionally requires package:
 
 - kmod-sched-ctinfo
 
