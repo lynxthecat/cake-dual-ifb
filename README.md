@@ -69,6 +69,8 @@ HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\QoS\
 
 And then creating the string "Do not use NLA" inside the QoS key with value "1"
 
+![image](https://user-images.githubusercontent.com/10721999/187535155-d4fd286b-9f20-40ce-8ff9-98ed36591721.png)
+
 And then by creating appropriate QoS policies in the Local Group Policy Editor:
 
 ![image](https://user-images.githubusercontent.com/10721999/187462933-78ebdee9-8121-4cad-8547-25b1a397572f.png)
