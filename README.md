@@ -71,4 +71,4 @@ And then creating the string "Do not use NLA" with value "1"
 
 And then by creating QoS policies in the Local Group Policy Editor:
 
-![image](https://user-images.githubusercontent.com/10721999/187462804-ae2ca658-59c6-488b-a029-64ffc3134d7a.png)
+![image](https://user-images.githubusercontent.com/10721999/187462933-78ebdee9-8121-4cad-8547-25b1a397572f.png)
