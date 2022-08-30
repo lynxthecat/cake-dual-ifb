@@ -32,3 +32,45 @@ To install:
    ```
    
    Verify interfaces (e.g. replace or delete br-lan / br-guest lines as required)
+   
+ ## DSCP restoration from conntracks
+ 
+ My preferred way to handle DSCPs is to set them locally at the LAN client level and have the router:
+ 
+- firstly, determine the DSCPs associated with upload packets; and
+- secondly, apply those DSCPs to corresponding download packets associated with the same connection.
+ 
+ This additional requires package:
+
+- kmod-sched-ctinfo
+
+ To exploit this the further steps are necessary:
+ 
+  ```bash
+      opkg update; opkg install kmod-sched-ctinfo
+      cd /etc/nftables.d/
+      wget https://raw.githubusercontent.com/lynxthecat/cake-wg-pbr/main/cake-dual-ifb.nft
+      /etc/init.d/firewall restart
+   ```
+ 
+ Verify correct operating using tcpdump:
+ 
+   ```bash
+      opkg update; opkg install tcpdump
+      # First check DSCPs correctly set by your LAN client on upload
+      tcpdump -i ifb-ul -vv udp
+      # Second check corresponding DSCPs are getting set by router on download
+      tcpdump -i ifb-dl -vv udp
+   ``` 
+   
+If using Microsoft Windows DSCPs can be set at the application level by creating the registry key 'QoS' (it not present) as in:
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\QoS
+
+And then creating the string "Do not use NLA" with value "1"
+
+And then by creating QoS policies in the Local Group Policy Editor:
+
+![image](https://user-images.githubusercontent.com/10721999/187459845-8801fac4-dfbc-45aa-8981-54d68adab297.png)
+
+
