@@ -44,7 +44,7 @@ To install:
 
 - kmod-sched-ctinfo
 
- To exploit this the further steps are necessary:
+ To set this up:
  
   ```bash
       opkg update; opkg install kmod-sched-ctinfo
@@ -53,7 +53,7 @@ To install:
       /etc/init.d/firewall restart
    ```
  
- Verify correct operating using tcpdump:
+ Verify correct operation using tcpdump:
  
    ```bash
       opkg update; opkg install tcpdump
