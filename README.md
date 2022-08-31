@@ -40,9 +40,11 @@ To install:
 - firstly, determine the DSCPs associated with upload packets; and
 - secondly, apply those DSCPs to corresponding download packets associated with the same connection.
  
- This is achieved by setting the DSCPs to the 'conntrack marks' on upload, using nftables, and restoring those DSCPs from the 'conntrack marks' on download, using tc-ctinfo.
+This is achieved by: first, using nftables to set the DSCPs to the 'conntrack marks' on upload; and secondly, using tc-ctinfo to restore those stored DSCPs from the 'conntrack marks' on download.
  
- This additionally requires package:
+Compare with port-based DSCP mapping and the like, this provides a robust way to apply DSCPs relating to applications that are important to users in both the upload and download directions. 
+ 
+This additionally requires package:
 
 - kmod-sched-ctinfo
 
