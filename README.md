@@ -42,7 +42,7 @@ To install:
  
 This is achieved by: first, using nftables to set the DSCPs to the 'conntrack marks' on upload; and secondly, using tc-ctinfo to restore those stored DSCPs from the 'conntrack marks' on download.
  
-Compare with port-based DSCP mapping and the like, this provides a robust way to apply DSCPs relating to applications that are important to users in both the upload and download directions. 
+Compared with port-based DSCP mapping and the like, this provides a robust way to apply DSCPs relating to applications that are important to users in both the upload and download directions. 
  
 This additionally requires package:
 
