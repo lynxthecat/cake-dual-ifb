@@ -34,7 +34,7 @@ To install:
    
    Verify interfaces (e.g. replace or delete br-lan / br-guest lines as required)
    
- ## DSCP restoration from conntracks
+ ## Using DSCPs
  
  cake-dual-ifb is designed to handle DSCPs as follows:
  
@@ -43,37 +43,7 @@ To install:
  
 This is achieved by: first, using nftables to set the DSCPs to the 'conntrack marks' on upload; and secondly, using tc-ctinfo to restore those stored DSCPs from the 'conntrack marks' on download.
  
-This facilitates setting DSCPs either by LAN clients and/or by the router itself. 
-
- ### To setup DSCP setting by LAN clients ###
- 
-  ```bash
-      cd /etc/nftables.d/
-      wget https://raw.githubusercontent.com/lynxthecat/cake-wg-pbr/main/cake-dual-ifb.nft
-      /etc/init.d/firewall restart
-   ```
- 
- Verify correct operation using tcpdump:
- 
-   ```bash
-      opkg update; opkg install tcpdump
-      # First check DSCPs correctly set by your LAN client on upload
-      tcpdump -i ifb-ul -vv udp
-      # Second check corresponding DSCPs are getting set by router on download
-      tcpdump -i ifb-dl -vv udp
-   ``` 
-   
-If using Microsoft Windows, DSCPs can be set at the application level by creating the registry key 'QoS' (it not present) as in:
-
-HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\QoS\
-
-And then creating the string "Do not use NLA" inside the QoS key with value "1"
-
-![image](https://user-images.githubusercontent.com/10721999/187535155-d4fd286b-9f20-40ce-8ff9-98ed36591721.png)
-
-And then by creating appropriate QoS policies in the Local Group Policy Editor:
-
-![image](https://user-images.githubusercontent.com/10721999/187747512-4c608e11-92a9-4484-b07f-3695baa98b85.png)
+This facilitates setting DSCPs not only by the router itself but also by LAN clients. As compared to relying upon port ranges and the like, setting DSCPs in LAN clients offers a robust way to set DSCPs at the application level. 
 
 ### To setup DSCP setting by the router ###
 
@@ -91,3 +61,39 @@ table bridge Classify-DHCP {
         }
 }
 ```
+
+This can be skipped if there is no desire to have the router set DSCPs (e.g. just rely on setting in LAN clients).
+
+ ### To setup DSCP setting by LAN clients ###
+ 
+  ```bash
+      cd /etc/nftables.d/
+      wget https://raw.githubusercontent.com/lynxthecat/cake-wg-pbr/main/cake-dual-ifb.nft
+      /etc/init.d/firewall restart
+   ```
+   
+#### Setting DSCPs in Microsoft Windows ####
+
+If using Microsoft Windows, DSCPs can be set at the application level by creating the registry key 'QoS' (it not present) as in:
+
+HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpip\QoS\
+
+And then creating the string "Do not use NLA" inside the QoS key with value "1"
+
+![image](https://user-images.githubusercontent.com/10721999/187535155-d4fd286b-9f20-40ce-8ff9-98ed36591721.png)
+
+And then by creating appropriate QoS policies in the Local Group Policy Editor:
+
+![image](https://user-images.githubusercontent.com/10721999/187747512-4c608e11-92a9-4484-b07f-3695baa98b85.png)
+
+### Verifying Correct DSCP Handling ###
+
+ Verify correct operation using tcpdump:
+ 
+   ```bash
+      opkg update; opkg install tcpdump
+      # First check DSCPs correctly set by your LAN client on upload
+      tcpdump -i ifb-ul -vv udp
+      # Second check corresponding DSCPs are getting set by router on download
+      tcpdump -i ifb-dl -vv udp
+   ``` 
