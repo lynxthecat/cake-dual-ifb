@@ -47,7 +47,7 @@ This facilitates setting DSCPs not only by the router itself but also by LAN cli
 
 ### To setup DSCP setting by the router ###
 
-Create an additional nft table in /usr/share/nftables.d/table-post/ and use the following format:
+Create an additional nft table in /usr/share/nftables.d/rulset-post/ and use the following format:
 
 ```bash
 table bridge Classify-DHCP {
