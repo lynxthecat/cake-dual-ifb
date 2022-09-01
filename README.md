@@ -62,7 +62,9 @@ table bridge Classify-DHCP {
 }
 ```
 
-This can be skipped if there is no desire to have the router set DSCPs (e.g. just rely on setting in LAN clients).
+This will override anything set by the LAN clients. 
+
+This can be skipped if there is no desire to have the router set DSCPs (e.g. just rely on setting by the LAN clients).
 
  ### To setup DSCP setting by LAN clients ###
  
