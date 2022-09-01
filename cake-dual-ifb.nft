@@ -3,7 +3,7 @@ chain cake-dual-ifb {
                 type filter hook postrouting priority 1
 
                 # reset any WAN->LAN DSCPs to 0
-                iifname { wan,vpn } ip dscp set 0 counter
+                iifname { wan } ip dscp set 0 counter
 
                 # store DSCPs in conntracks
                 iifname { br-lan,br-guest } meta nfproto ipv4 ct mark set (@nh,8,8 & 252) >> 2
