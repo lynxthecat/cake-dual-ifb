@@ -1,9 +1,16 @@
 chain cake-dual-ifb {
 
-        	type filter hook prerouting priority mangle; policy accept;
-		iifname { wan,vpn } ip dscp set 0
-		iifname { br-lan,br-guest } meta nfproto ipv4 ct mark set (@nh,8,8 & 252) >> 2 
-		iifname { br-lan,br-guest } meta nfproto ipv6 ct mark set (@nh,0,16 & 4032) >> 6
-		iifname { br-lan,br-guest } ct mark set ct mark or 128	
+                type filter hook postrouting priority 1
 
+                # reset any WAN->LAN DSCPs to 0
+                iifname { wan,vpn } ip dscp set 0 counter
+
+                # store DSCPs in conntracks
+                iifname { br-lan,br-guest } meta nfproto ipv4 ct mark set (@nh,8,8 & 252) >> 2
+                iifname { br-lan,br-guest } meta nfproto ipv6 ct mark set (@nh,0,16 & 4032) >> 6
+                iifname { br-lan,br-guest } ct mark set ct mark or 128
+
+                # reset any LAN->WAN DSCPs to 0 (having already shaped and stored DSCPs in conntracks)
+                oifname { wan } ip dscp set 0 counter
 }
+~
