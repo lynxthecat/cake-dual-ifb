@@ -16,6 +16,7 @@ This script requires at least the following packages:
 - **kmod-sched**
 - **kmod-sched-core**
 - **kmod-sched-cake**
+- **kmod-sched-ctinfo**
 
 ## Installation on OpenWrt
 
@@ -35,23 +36,18 @@ To install:
    
  ## DSCP restoration from conntracks
  
- My preferred way to handle DSCPs is to set them locally at the LAN client level and have the router:
+ cake-dual-ifb is designed to handle DSCPs as follows:
  
 - firstly, determine the DSCPs associated with upload packets; and
 - secondly, apply those DSCPs to corresponding download packets associated with the same connection.
  
 This is achieved by: first, using nftables to set the DSCPs to the 'conntrack marks' on upload; and secondly, using tc-ctinfo to restore those stored DSCPs from the 'conntrack marks' on download.
  
-Compared with port-based DSCP mapping and the like, this provides a robust way to apply DSCPs relating to applications that are important to users in both the upload and download directions. 
- 
-This additionally requires package:
+This facilitates setting DSCPs either by LAN clients and/or by the router itself. 
 
-- kmod-sched-ctinfo
-
- To set this up:
+ ### To setup DSCP setting by LAN clients ###
  
   ```bash
-      opkg update; opkg install kmod-sched-ctinfo
       cd /etc/nftables.d/
       wget https://raw.githubusercontent.com/lynxthecat/cake-wg-pbr/main/cake-dual-ifb.nft
       /etc/init.d/firewall restart
@@ -78,3 +74,20 @@ And then creating the string "Do not use NLA" inside the QoS key with value "1"
 And then by creating appropriate QoS policies in the Local Group Policy Editor:
 
 ![image](https://user-images.githubusercontent.com/10721999/187747512-4c608e11-92a9-4484-b07f-3695baa98b85.png)
+
+### To setup DSCP setting by the router ###
+
+Create an additional nft table in /usr/share/nftables.d/table-post/ and use the following format:
+
+```bash
+table bridge Classify-DHCP {
+
+        chain classify {
+
+                type filter hook prerouting priority 0
+
+                ibrname br-guest ether saddr X ip dscp set cs1
+
+        }
+}
+```
