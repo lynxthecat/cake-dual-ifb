@@ -1,16 +1,85 @@
-chain cake-dual-ifb {
+table inet cake-dual-ifb-inet
+flush table inet cake-dual-ifb-inet
 
-                type filter hook postrouting priority 1
+table bridge cake-dual-ifb-bridge
+flush table bridge cake-dual-ifb-bridge
 
-                # reset any WAN->LAN DSCPs to 0
-                iifname { wan } ip dscp set 0 counter
+table inet cake-dual-ifb-inet {
+
+        chain hook-output {
+
+                type filter hook output priority 0
+
+                # OpenWrt->wan
+                oifname wan mark !=0x2 mark set 3 goto process-upload
+
+        }
+
+        chain hook-postrouting {
+
+                type filter hook postrouting priority 0
+
+                # lan->wan/vpn
+                iifname { br-lan, br-guest } oifname { wan, vpn } goto process-upload
+
+                # wan/vpn->br-lan
+                iifname { vpn, wan } oifname br-lan mark set 1
+
+                # wan/vpn->br-lan
+                iifname { vpn, wan } oifname br-guest mark set 2
+        }
+
+        chain process-upload {
 
                 # store DSCPs in conntracks
-                iifname { br-lan,br-guest } meta nfproto ipv4 ct mark set (@nh,8,8 & 252) >> 2
-                iifname { br-lan,br-guest } meta nfproto ipv6 ct mark set (@nh,0,16 & 4032) >> 6
-                iifname { br-lan,br-guest } ct mark set ct mark or 128
+                meta nfproto ipv4 ct mark set (@nh,8,8 & 252) >> 2
+                meta nfproto ipv6 ct mark set (@nh,0,16 & 4032) >> 6
+                ct mark set ct mark or 128
+        }
 
-                # reset any LAN->WAN DSCPs to 0 (having already shaped and stored DSCPs in conntracks)
-                oifname { wan } ip dscp set 0 counter
+
 }
-~
+
+table bridge cake-dual-ifb-bridge {
+
+        map rules_proto_dport {
+                type inet_proto . inet_service : verdict
+                elements = {
+                        tcp . 53 : goto dscp_set_voice,
+                        tcp . 853 : goto dscp_set_voice,
+                        udp . 53 : goto dscp_set_voice,
+                        udp . 853 : goto dscp_set_voice,
+                        udp . 123 : goto dscp_set_voice
+                }
+        }
+
+        chain dscp_set_voice {
+                ip dscp set cs4
+        }
+
+        chain dscp_set_bulk {
+                ip dscp set cs1
+        }
+
+        chain hook-input {
+
+                type filter hook input priority 0
+
+                # br-lan->wan
+                ibrname br-lan ip daddr != { 192.168.1.1/32, 255.255.255.255/32, 224.0.0.0/4 } mark set 1 goto classify-dhcp
+                # br-guest->wan
+                ibrname br-guest ip daddr != { 192.168.1.1/32, 255.255.255.255/32, 224.0.0.0/4 } mark set 2 goto classify-dhcp
+        }
+
+        chain classify-dhcp {
+
+		meta l4proto . th dport vmap @rules_proto_dport
+
+                # IoT devices
+                ibrname br-guest ether saddr {
+                                                XX,
+                                                YY
+                } ip dscp set cs1 
+
+        }
+}
