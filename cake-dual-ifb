@@ -6,38 +6,47 @@ START=50
 STOP=4
 
 start() {
-	# ifb interface for handling ingress on WAN (and VPN interface if wg show reports endpoint)
+	# Setup dual IFBs
 	ip link add name ifb-ul type ifb
 	ip link add name ifb-dl type ifb
 	ip link set ifb-ul up
 	ip link set ifb-dl up
 
 	tc qdisc add dev br-lan handle ffff: ingress
-	tc qdisc add dev br-guest handle ffff: ingress
 	tc qdisc add dev br-lan handle 1: root prio
+	
+	tc qdisc add dev br-guest handle ffff: ingress
 	tc qdisc add dev br-guest handle 1: root prio
 
-	# capture upload (ingress) on br-lan that is not LAN-LAN and is not multicast or broadcast
-	tc filter add dev br-lan parent ffff: protocol ip prio 1 u32 match ip dst 192.168.1.0/24 action pass
-	tc filter add dev br-lan parent ffff: protocol ip prio 1 u32 match ip dst 224.0.0.0/4 action pass
-	tc filter add dev br-lan parent ffff: protocol ip prio 1 u32 match ip dst 255.255.255.255/32 action pass
-	tc filter add dev br-lan parent ffff: protocol ip prio 2 matchall action mirred egress redirect dev ifb-ul
+	tc qdisc add dev wan handle ffff: ingress
+	tc qdisc add dev wan handle 1: root prio
 
-	# capture upload (ingress) on br-guest that is not LAN-LAN and is not mutlicast or broadcast
-	tc filter add dev br-guest parent ffff: protocol ip prio 1 u32 match ip dst 192.168.2.0/24 action pass
-	tc filter add dev br-guest parent ffff: protocol ip prio 1 u32 match ip dst 224.0.0.0/4 action pass
-	tc filter add dev br-guest parent ffff: protocol ip prio 1 u32 match ip dst 255.255.255.255/32 action pass
-	tc filter add dev br-guest parent ffff: protocol ip prio 2 matchall action mirred egress redirect dev ifb-ul
-       	
-	# capture download (egress) on br-lan and restore DSCPs from conntracks
-	tc filter add dev br-lan parent 1: protocol ip prio 1 u32 match ip src 192.168.1.0/24 action pass
-	tc filter add dev br-lan parent 1: protocol ip prio 2 matchall action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
+	# capture br-lan (ingress) -> wan
+	# filter by fwmark 1
+	tc filter add dev br-lan parent ffff: protocol ip handle 1 fw flowid 1:1 action mirred egress redirect dev ifb-ul
 
-	# capture download (egress) on br-guest and restore DSCPs from conntracks
-	tc filter add dev br-guest parent 1: protocol ip prio 1 u32 match ip src 192.168.2.0/24 action pass
-	tc filter add dev br-guest parent 1: protocol ip prio 2 matchall action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
+	# capture br-guest (ingress) -> wan
+	# filter by fwmark 2
+	tc filter add dev br-guest parent ffff: protocol ip handle 2 fw flowid 1:1 action mirred egress redirect dev ifb-ul
 
-	# apply CAKE on the ifbs
+	# capture OpenWrt -> wan (egress)
+	# filter by fwmark 3 (use fwmark in nftables to designate, and skip over, WireGuard traffic
+	tc filter add dev wan parent 1: protocol ip handle 3 fw flowid 1:1 action mirred egress redirect dev ifb-ul
+
+	# capture wan -> br-lan (egress) and restore DSCPs from conntracks
+	# filter by fwmark 1
+	tc filter add dev br-lan parent 1: protocol ip handle 1 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
+
+	# capture wan -> br-guest (egress) and restore DSCPs from conntracks
+	# filter by fwmark 2
+	tc filter add dev br-guest parent 1: protocol ip handle 2 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
+
+	# capture wan (ingress) -> OpenWrt and restore DSCPs from conntracks
+	# filter on conntrack bit 128 set
+ 	tc filter add dev wan parent ffff: prio 1 protocol ip matchall action ctinfo cpmark continue
+	tc filter add dev wan parent ffff: prio 2 protocol ip handle 128/128 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
+
+	# apply CAKE on the IFBs
 	tc qdisc add dev ifb-ul root cake bandwidth 30Mbit diffserv4 dual-srchost nonat nowash no-ack-filter noatm overhead 92
 	tc qdisc add dev ifb-dl root cake bandwidth 25Mbit diffserv4 dual-dsthost nonat nowash ingress no-ack-filter noatm overhead 92
 }
@@ -47,6 +56,9 @@ stop() {
         tc qdisc del dev br-guest ingress
         tc qdisc del dev br-lan root
         tc qdisc del dev br-guest root
+	tc qdisc del dev wan ingress
+	tc qdisc del dev wan root
+
         tc qdisc del dev ifb-ul root
         tc qdisc del dev ifb-dl root
         ip link set ifb-ul down
