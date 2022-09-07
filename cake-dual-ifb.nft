@@ -11,7 +11,7 @@ table inet cake-dual-ifb-inet {
                 type filter hook output priority 0
 
                 # OpenWrt->wan
-                oifname wan mark !=0x2 mark set 3 goto process-upload
+                oifname wan mark !=0x2 mark set 3 goto classify-dhcp-then-process-upload
 
         }
 
@@ -37,31 +37,54 @@ table inet cake-dual-ifb-inet {
                 ct mark set ct mark or 128
         }
 
+	chain classify-dhcp-then-process-upload {
+	
+		jump classify-dhcp
+		goto process-upload
+	}
 
-}
+	# OpenWrt->wan DHCP classication by router
+        chain classify-dhcp {
 
-table bridge cake-dual-ifb-bridge {
+                meta l4proto . th dport vmap @rules_proto_dport
+        
+	}
 
         map rules_proto_dport {
                 type inet_proto . inet_service : verdict
                 elements = {
-                        tcp . 53 : goto dscp_set_voice,
-                        tcp . 853 : goto dscp_set_voice,
-                        udp . 53 : goto dscp_set_voice,
-                        udp . 853 : goto dscp_set_voice,
-                        udp . 123 : goto dscp_set_voice
+			tcp . 53 : goto dscp_set_voice,  # DNS
+                        udp . 53 : goto dscp_set_voice,  # DNS
+                        tcp . 853 : goto dscp_set_voice, # DNS-over-TLS
+                        udp . 853 : goto dscp_set_voice, # DNS-over-TLS
+                        udp . 123 : goto dscp_set_voice  # NTP
                 }
         }
 
-        chain dscp_set_voice {
-                ip dscp set cs4
-        }
-
+        # designate packet for cake tin: bulk
         chain dscp_set_bulk {
                 ip dscp set cs1
         }
 
-        chain hook-input {
+        # designate packet for cake tin: besteffort
+        chain dscp_set_besteffort {
+                ip dscp set cs0
+        }
+
+        # designate packet for cake tin: video
+        chain dscp_set_video {
+                ip dscp set cs2
+        }
+
+        # designate packet for cake tin: voice
+        chain dscp_set_voice {
+                ip dscp set cs4
+        }	
+}
+
+table bridge cake-dual-ifb-bridge {
+
+	 chain hook-input {
 
                 type filter hook input priority 0
 
@@ -71,15 +94,45 @@ table bridge cake-dual-ifb-bridge {
                 ibrname br-guest ip daddr != { 192.168.1.1/32, 255.255.255.255/32, 224.0.0.0/4 } mark set 2 goto classify-dhcp
         }
 
-        chain classify-dhcp {
+        # lan->wan DHCP classication by router
+	# set/override  DHCP classifications on lan-originating traffic
+	chain classify-dhcp {
 
-		meta l4proto . th dport vmap @rules_proto_dport
+                meta l4proto . th dport vmap @rules_proto_dport
 
                 # IoT devices
                 ibrname br-guest ether saddr {
                                                 XX,
                                                 YY
-                } ip dscp set cs1 
+                } goto dscp_set_bulk
 
         }
+
+        map rules_proto_dport {
+                type inet_proto . inet_service : verdict
+                elements = {
+                        udp . 123 : goto dscp_set_voice # NTP
+                }
+        }
+
+        # designate packet for cake tin: bulk
+        chain dscp_set_bulk {
+                ip dscp set cs1
+        }
+
+	# designate packet for cake tin: besteffort
+	chain dscp_set_besteffort {
+		ip dscp set cs0
+	}
+
+	# designate packet for cake tin: video
+	chain dscp_set_video {
+		ip dscp set cs2
+	}
+        
+	# designate packet for cake tin: voice
+        chain dscp_set_voice {
+                ip dscp set cs4
+        }
+
 }
