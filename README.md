@@ -12,7 +12,13 @@ That is, create 'ifb-ul' by mirroring the ingress from br-lan and br-guest and c
 
 This permits CAKE to properly function despite complex setups like use of VPN pbr and a guest LAN.
 
- ### DSCPs
+### nftables
+
+nftables is leveraged to apply fwmarks, DSCPs, and save DSCPs to conntracks as appropriate - see hooks here:
+
+https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks
+
+### DSCPs
  
  cake-dual-ifb is designed to handle DSCPs as follows:
  
