@@ -12,12 +12,6 @@ That is, create 'ifb-ul' by mirroring the ingress from br-lan and br-guest and c
 
 This permits CAKE to properly function despite complex setups like use of VPN pbr and a guest LAN.
 
-### nftables
-
-nftables is leveraged to apply fwmarks, DSCPs, and save DSCPs to conntracks as appropriate - see hooks here:
-
-https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks
-
 ### DSCPs
  
  cake-dual-ifb is designed to handle DSCPs as follows:
@@ -28,6 +22,17 @@ https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks
 This is achieved by: first, using nftables to set the DSCPs to the 'conntrack marks' on upload; and secondly, using tc-ctinfo to restore those stored DSCPs from the 'conntrack marks' on download.
  
 This facilitates setting DSCPs not only by the router itself but also by LAN clients. As compared to relying upon port ranges and the like, setting DSCPs in LAN clients offers a robust way to set DSCPs at the application level. 
+
+### nftables
+
+nftables is leveraged to apply fwmarks, DSCPs, and save DSCPs to conntracks as appropriate. 
+
+To understand the logic adopted in cake-dual-ifb.nft consider this helpful diagram:
+
+![image](https://user-images.githubusercontent.com/10721999/188932157-881bd4ef-e1ab-46d7-bd1b-966e78f00429.png)
+
+Source: https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks
+
 
 ## Required packages
 
