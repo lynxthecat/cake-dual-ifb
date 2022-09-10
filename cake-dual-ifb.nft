@@ -11,7 +11,7 @@ table inet cake-dual-ifb-inet {
                 type filter hook output priority 0
 
                 # OpenWrt->wan
-                oifname wan mark !=0x2 mark set 3 goto classify-dhcp-then-process-upload
+                oifname wan mark !=0x2 mark set 3 goto process-openwrt-to-wan
 
         }
 
@@ -20,31 +20,25 @@ table inet cake-dual-ifb-inet {
                 type filter hook postrouting priority 0
 
                 # lan->wan/vpn
-                iifname { br-lan, br-guest } oifname { wan, vpn } goto process-upload
+                iifname { br-lan, br-guest } oifname { wan, vpn } goto store-dscp-in-conntrack
 
                 # wan/vpn->br-lan
                 iifname { vpn, wan } oifname br-lan mark set 1
 
-                # wan/vpn->br-lan
+                # wan/vpn->br-guest
                 iifname { vpn, wan } oifname br-guest mark set 2
         }
 
-        chain process-upload {
+	chain process-openwrt-to-wan {
 
-                # store DSCPs in conntracks
-                meta nfproto ipv4 ct mark set (@nh,8,8 & 252) >> 2
-                meta nfproto ipv6 ct mark set (@nh,0,16 & 4032) >> 6
-                ct mark set ct mark or 128
-        }
-
-	chain classify-dhcp-then-process-upload {
-	
-		jump classify-dhcp
-		goto process-upload
+		jump classify-dscp
+		jump store-dscp-in-conntrack
+		# mark special bit '256' in conntrack for tc filtering on wan ingress
+		ct mark set ct mark or 256
 	}
 
-	# OpenWrt->wan DHCP classication by router
-        chain classify-dhcp {
+	# OpenWrt->wan dscp classication by router
+        chain classify-dscp {
 
                 meta l4proto . th dport vmap @rules_proto_dport
         
@@ -80,6 +74,14 @@ table inet cake-dual-ifb-inet {
         chain dscp_set_voice {
                 ip dscp set cs4
         }	
+
+	chain store-dscp-in-conntrack {
+
+                # store DSCPs in conntracks
+                meta nfproto ipv4 ct mark set (@nh,8,8 & 252) >> 2
+                meta nfproto ipv6 ct mark set (@nh,0,16 & 4032) >> 6
+                ct mark set ct mark or 128
+        }
 }
 
 table bridge cake-dual-ifb-bridge {
@@ -89,14 +91,14 @@ table bridge cake-dual-ifb-bridge {
                 type filter hook input priority 0
 
                 # br-lan->wan
-                ibrname br-lan ip daddr != { 192.168.1.1/32, 255.255.255.255/32, 224.0.0.0/4 } mark set 1 goto classify-dhcp
+                ibrname br-lan meta pkttype unicast ip daddr != 192.168.1.1/32 mark set 1 goto classify-dscp
                 # br-guest->wan
-                ibrname br-guest ip daddr != { 192.168.1.1/32, 255.255.255.255/32, 224.0.0.0/4 } mark set 2 goto classify-dhcp
+                ibrname br-guest meta pkttype unicast ip daddr != 192.168.1.1/32 mark set 2 goto classify-dscp
         }
 
-        # lan->wan DHCP classication by router
+        # lan->wan dscp classication by router
 	# set/override  DHCP classifications on lan-originating traffic
-	chain classify-dhcp {
+	chain classify-dscp {
 
                 meta l4proto . th dport vmap @rules_proto_dport
 
