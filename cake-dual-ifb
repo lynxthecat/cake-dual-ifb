@@ -44,7 +44,7 @@ start() {
 	# capture wan (ingress) -> OpenWrt and restore DSCPs from conntracks
 	# filter on conntrack bit 128 set
  	tc filter add dev wan parent ffff: prio 1 protocol ip matchall action ctinfo cpmark continue
-	tc filter add dev wan parent ffff: prio 2 protocol ip handle 128/128 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
+	tc filter add dev wan parent ffff: prio 2 protocol ip handle 256/256 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
 
 	# apply CAKE on the IFBs
 	tc qdisc add dev ifb-ul root cake bandwidth 30Mbit diffserv4 dual-srchost nonat nowash no-ack-filter noatm overhead 92
