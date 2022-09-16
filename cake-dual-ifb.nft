@@ -32,12 +32,13 @@ table inet cake-dual-ifb-inet {
 
 	chain process-openwrt-to-wan {
 
+		# wash dscp
+		ip dscp set af11
+
 		jump classify-dscp
 		jump store-dscp-in-conntrack
 		# mark special bit '256' in conntrack for tc filtering on wan ingress
 		ct mark set ct mark or 256
-		# wash dscp
-		ip dscp set af11
 	}
 
 	chain process-lan-to-wan {
@@ -128,11 +129,11 @@ table bridge cake-dual-ifb-bridge {
 
                 meta l4proto . th dport vmap @rules_proto_dport
 
-                # IoT devices
-                ibrname br-guest ether saddr {
-                                                XX,
-                                                YY
-                } goto dscp_set_bulk
+                # IoT devices (put mac addresses here)
+                #ibrname br-guest ether saddr {
+                #                               XX,
+		#				YY
+                #} goto dscp_set_bulk
 
         }
 
