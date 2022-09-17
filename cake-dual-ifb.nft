@@ -60,7 +60,6 @@ table inet cake-dual-ifb-inet {
 	# OpenWrt->wan dscp classication by router
         chain classify-dscp {
 
-		ip dscp set cs0
 		meta l4proto . th dport vmap @rules_proto_dport
         
 	}
