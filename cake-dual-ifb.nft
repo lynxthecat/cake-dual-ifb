@@ -14,7 +14,7 @@ table inet cake-dual-ifb-inet {
                 oifname wan mark !=0x2 mark set 3 goto process-openwrt-to-wan
 
 		# wash dscp on WireGuard traffic
-		oifname wan mark 2 ip dscp set af11
+		oifname wan mark 2 ip dscp set cs0
 
         }
 
@@ -32,9 +32,6 @@ table inet cake-dual-ifb-inet {
 
 	chain process-openwrt-to-wan {
 
-		# wash dscp
-		ip dscp set af11
-
 		jump classify-dscp
 		jump store-dscp-in-conntrack
 		# mark special bit '256' in conntrack for tc filtering on wan ingress
@@ -47,10 +44,6 @@ table inet cake-dual-ifb-inet {
 		tcp dport 53 mark set 3 goto process-openwrt-to-wan
 		udp dport 53 mark set 3 goto process-openwrt-to-wan
 
-		jump store-dscp-in-conntrack
-
-		# wash dscp
-		ip dscp set af11
 	}
 
 	chain process-wan-to-lan {
@@ -67,7 +60,8 @@ table inet cake-dual-ifb-inet {
 	# OpenWrt->wan dscp classication by router
         chain classify-dscp {
 
-                meta l4proto . th dport vmap @rules_proto_dport
+		ip dscp set cs0
+		meta l4proto . th dport vmap @rules_proto_dport
         
 	}
 
@@ -105,8 +99,8 @@ table inet cake-dual-ifb-inet {
 	chain store-dscp-in-conntrack {
 
                 # store DSCPs in conntracks
-                meta nfproto ipv4 ct mark set (@nh,8,8 & 252) >> 2
-                meta nfproto ipv6 ct mark set (@nh,0,16 & 4032) >> 6
+                ip version 4 ct mark set (@nh,8,8 & 252) >> 2
+                ip6 version 6 ct mark set (@nh,0,16 & 4032) >> 6
                 ct mark set ct mark or 128
         }
 }
@@ -118,9 +112,9 @@ table bridge cake-dual-ifb-bridge {
                 type filter hook input priority filter
 
                 # br-lan->wan
-                ibrname br-lan meta pkttype unicast ip daddr != 192.168.1.1/32 mark set 1 goto classify-dscp
+                ibrname br-lan meta pkttype unicast ip daddr != 192.168.1.1/32 mark set 1 goto process-lan-to-wan
                 # br-guest->wan
-                ibrname br-guest meta pkttype unicast ip daddr != 192.168.2.1/32 mark set 2 goto classify-dscp 
+                ibrname br-guest meta pkttype unicast ip daddr != 192.168.2.1/32 mark set 2 goto process-lan-to-wan
         }
 
         # lan->wan dscp classication by router
@@ -131,8 +125,8 @@ table bridge cake-dual-ifb-bridge {
 
                 # IoT devices (put mac addresses here)
                 #ibrname br-guest ether saddr {
-                #                               XX,
-		#				YY
+                #                                XX,
+                #                                YY
                 #} goto dscp_set_bulk
 
         }
@@ -162,6 +156,22 @@ table bridge cake-dual-ifb-bridge {
 	# designate packet for cake tin: voice
         chain dscp_set_voice {
                 ip dscp set cs4
+        }
+ 
+
+        chain process-lan-to-wan {
+	
+		jump classify-dscp	
+                goto store-dscp-in-conntrack
+
+        }
+       
+	chain store-dscp-in-conntrack {
+
+                # store DSCPs in conntracks
+                ip version 4 ct mark set (@nh,8,8 & 252) >> 2
+                ip6 version 6 ct mark set (@nh,0,16 & 4032) >> 6
+                ct mark set ct mark or 128
         }
 
 }
