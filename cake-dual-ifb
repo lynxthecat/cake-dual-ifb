@@ -47,7 +47,7 @@ start() {
 	tc filter add dev wan parent ffff: prio 2 protocol ip handle 256/256 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
 
 	# apply CAKE on the IFBs
-	tc qdisc add dev ifb-ul root cake bandwidth 30Mbit diffserv4 dual-srchost nonat nowash no-ack-filter noatm overhead 92
+	tc qdisc add dev ifb-ul root cake bandwidth 30Mbit diffserv4 dual-srchost nonat wash no-ack-filter noatm overhead 92
 	tc qdisc add dev ifb-dl root cake bandwidth 25Mbit diffserv4 dual-dsthost nonat nowash ingress no-ack-filter noatm overhead 92
 }
 
