@@ -39,7 +39,7 @@ table inet cake-dual-ifb-inet {
 	}
 
 	chain process-lan-to-wan {
-
+	
 		# Handle DNS hijacking (effectively resulting in openwrt-to-wan)
 		tcp dport 53 mark set 3 goto process-openwrt-to-wan
 		udp dport 53 mark set 3 goto process-openwrt-to-wan
@@ -110,10 +110,21 @@ table bridge cake-dual-ifb-bridge {
 
                 type filter hook input priority filter
 
-                # br-lan->wan
-                ibrname br-lan meta pkttype unicast ip daddr != 192.168.1.1/32 mark set 1 goto process-lan-to-wan
-                # br-guest->wan
-                ibrname br-guest meta pkttype unicast ip daddr != 192.168.2.1/32 mark set 2 goto process-lan-to-wan
+                meta pkttype unicast ip daddr != {192.168.1.1/32, 192.168.2.1/32} goto process-lan-to-wan
+        }
+
+        chain process-lan-to-wan {
+
+                ibrname br-lan mark set 1
+                ibrname br-guest mark set 2
+
+                # Handle DNS hijacking
+                tcp dport 53 mark set 0
+                udp dport 53 mark set 0
+
+                jump classify-dscp
+                goto store-dscp-in-conntrack
+
         }
 
         # lan->wan dscp classication by router
@@ -157,14 +168,6 @@ table bridge cake-dual-ifb-bridge {
                 ip dscp set cs4
         }
  
-
-        chain process-lan-to-wan {
-	
-		jump classify-dscp	
-                goto store-dscp-in-conntrack
-
-        }
-       
 	chain store-dscp-in-conntrack {
 
                 # store DSCPs in conntracks
