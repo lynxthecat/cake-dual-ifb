@@ -32,7 +32,10 @@ This permits CAKE to properly function despite complex setups like use of VPN pb
 - firstly, determine the DSCPs associated with upload packets; and
 - secondly, apply those DSCPs to corresponding download packets associated with the same connection.
  
-This is achieved by: first, using nftables to set the DSCPs to the 'conntrack marks' on upload; and secondly, using tc-ctinfo to restore those stored DSCPs from the 'conntrack marks' on download.
+This is achieved by: 
+
+- firstly, using nftables to set the DSCPs to the 'conntrack marks' on upload; and 
+- secondly, using tc-ctinfo to restore those stored DSCPs from the 'conntrack marks' on download.
  
 This facilitates setting DSCPs not only by the router itself but also by LAN clients. As compared to relying upon port ranges and the like, setting DSCPs in LAN clients offers a robust way to set DSCPs at the application level. 
 
@@ -76,7 +79,7 @@ To install:
 
 This can optionally override anything set by the LAN clients. 
 
-#### Setting DSCPs in Microsoft Windows ####
+### Setting DSCPs in Microsoft Windows Based LAN Clients ###
 
 If using Microsoft Windows, DSCPs can be set at the application level by creating the registry key 'QoS' (it not present) as in:
 
@@ -90,14 +93,14 @@ And then by creating appropriate QoS policies in the Local Group Policy Editor:
 
 ![image](https://user-images.githubusercontent.com/10721999/187747512-4c608e11-92a9-4484-b07f-3695baa98b85.png)
 
-### Verifying Correct DSCP Handling ###
+### Verifying Correct Operation and DSCP Handling ###
 
- Verify correct operation using tcpdump:
+ Verify correct operation and DSCP handling using tcpdump:
  
    ```bash
       opkg update; opkg install tcpdump
-      # First check DSCPs correctly set by your LAN client on upload
+      # First check correct flows and DSCPs correctly set by your LAN client on upload
       tcpdump -i ifb-ul -vv udp
-      # Second check corresponding DSCPs are getting set by router on download
+      # Second check correct flows and corresponding DSCPs are getting set by router on download
       tcpdump -i ifb-dl -vv udp
    ``` 
