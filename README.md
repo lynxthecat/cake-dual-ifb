@@ -8,7 +8,7 @@ Set up CAKE using dual upload and download IFBs:
 
 ![image](https://user-images.githubusercontent.com/10721999/188687637-630aa3c5-ee42-4139-be4d-283e1515b54d.png)
 
-That is, create 'ifb-ul' by mirroring the ingress from br-lan and br-guest and create 'ifb-dl' by mirroring the egress from br-lan and br-guest. And skip out the LAN-LAN traffic. Then apply CAKE on 'ifb-ul' and 'ifb-dl'. 
+That is, create 'ifb-ul' by mirroring a) appropriately selected ingress from br-lan and br-guest and b) appropriately selected egress from wan. And create 'ifb-dl' by a) mirroring appropriately selected egress from br-lan and br-guest and b) appropriately selected ingress from wan. Appropriate selection is achieved through fwmarks using nftables to isolate and avoid duplication of the relevant flows including unencrytyped WireGuard traffic and OpenWrt->WAN and WAN->Open traffic, and skip out the LAN-LAN traffic. Then apply CAKE on 'ifb-ul' and 'ifb-dl'. 
 
 This permits CAKE to properly function despite complex setups like use of VPN pbr and a guest LAN.
 
