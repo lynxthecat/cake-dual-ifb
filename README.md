@@ -19,7 +19,7 @@ And create 'ifb-dl' by mirroring:
 - a) appropriately selected egress from br-lan and br-guest; and 
 - b) appropriately selected ingress from wan. 
 
-Appropriate selection is achieved through fwmarks using nftables to isolate and avoid duplication of the relevant flows including unencrytyped WireGuard traffic and OpenWrt->WAN and WAN->Open traffic, and skip out the LAN-LAN traffic. 
+Appropriate selection is achieved through fwmarks using nftables to isolate and avoid duplication of the relevant flows including unencrytyped WireGuard traffic and OpenWrt->WAN and WAN->OpenWrt traffic, and skip out the LAN-LAN traffic. 
 
 Then apply CAKE on 'ifb-ul' and 'ifb-dl'. 
 
