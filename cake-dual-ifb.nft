@@ -18,9 +18,9 @@ table inet cake-dual-ifb-inet {
 
         }
 
-        chain hook-postrouting {
+        chain hook-forward {
 
-                type filter hook postrouting priority filter
+                type filter hook forward priority filter
 
                 # lan->wan
                 iifname { br-lan, br-guest } oifname { wan, vpn } goto process-lan-to-wan
@@ -29,6 +29,17 @@ table inet cake-dual-ifb-inet {
                 iifname { vpn, wan } oifname { br-lan, br-guest } goto process-wan-to-lan
 
         }
+
+	chain hook-postrouting {
+
+		type filter hook postrouting priority filter
+
+		# fix ttl to help disguise use of router over mobile network
+		# for bridge mode set ttl to 64
+		# for USB tethering set ttl to 65
+		
+		oifname wan ip ttl set 64
+	}
 
 	chain process-openwrt-to-wan {
 
@@ -134,7 +145,7 @@ table bridge cake-dual-ifb-bridge {
                 meta l4proto . th dport vmap @rules_proto_dport
 
                 # IoT devices (put mac addresses here)
-                #ibrname br-guest ether saddr {
+                # ibrname br-guest ether saddr {
                 #                                XX,
                 #                                YY
                 #} goto dscp_set_bulk
