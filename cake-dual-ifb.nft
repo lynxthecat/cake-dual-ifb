@@ -11,10 +11,7 @@ table inet cake-dual-ifb-inet {
                 type filter hook output priority filter
 
                 # OpenWrt->wan
-                oifname wan mark !=0x2 mark set 3 goto process-openwrt-to-wan
-
-		# wash dscp on WireGuard traffic
-		oifname wan mark 2 ip dscp set cs0
+                oifname wan mark !=4 mark set 3 goto process-openwrt-to-wan
 
         }
 
