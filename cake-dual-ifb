@@ -30,7 +30,7 @@ start() {
 	tc filter add dev br-guest parent ffff: protocol ip handle 2 fw flowid 1:1 action mirred egress redirect dev ifb-ul
 
 	# capture OpenWrt -> wan (egress)
-	# filter by fwmark 3 (use nftables to skip over WireGuard traffic with fwmark 2 and apply fwmark 3 to the remainder)
+	# filter by fwmark 3 (use nftables to skip over WireGuard traffic with fwmark 4 and apply fwmark 3 to the remainder)
 	tc filter add dev wan parent 1: protocol ip handle 3 fw flowid 1:1 action mirred egress redirect dev ifb-ul
 
 	# capture wan -> br-lan (egress) and restore DSCPs from conntracks
