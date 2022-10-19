@@ -4,6 +4,27 @@ flush table inet cake-dual-ifb-inet
 table bridge cake-dual-ifb-bridge
 flush table bridge cake-dual-ifb-bridge
 
+# local interfaces to collect traffic from
+# ingress traffic through forward hook is sent to ifb-ul
+# egress traffic through forward hook is sent to ifb-dl
+define IFACE_NAMES = {
+	br-lan,
+	br-guest
+}
+
+# local interface IP addresses
+# traffic with these destination addresses is skipped
+define IFACE_IPS = {
+	192.168.1.1,
+	192.168.2.1
+}
+
+# local MAC addresses to set to bulk (e.g. IoT devices)
+define BULK_MACS = {
+	XX,
+	YY
+}
+
 table inet cake-dual-ifb-inet {
 
         chain hook-output {
@@ -11,7 +32,7 @@ table inet cake-dual-ifb-inet {
                 type filter hook output priority filter
 
                 # OpenWrt->wan
-                oifname wan mark !=4 mark set 3 goto process-openwrt-to-wan
+                oifname wan mark !=3 mark set 2 goto process-openwrt-to-wan
 
         }
 
@@ -20,10 +41,10 @@ table inet cake-dual-ifb-inet {
                 type filter hook forward priority filter
 
                 # lan->wan
-                iifname { br-lan, br-guest } oifname { wan, vpn } goto process-lan-to-wan
+                iifname $IFACE_NAMES goto process-lan-to-wan
 
                 # wan->lan
-                iifname { vpn, wan } oifname { br-lan, br-guest } goto process-wan-to-lan
+                oifname $IFACE_NAMES goto process-wan-to-lan
 
         }
 
@@ -47,7 +68,7 @@ table inet cake-dual-ifb-inet {
 	}
 
 	chain process-lan-to-wan {
-	
+
 		# Handle DNS hijacking (effectively resulting in openwrt-to-wan)
 		tcp dport 53 mark set 3 goto process-openwrt-to-wan
 		udp dport 53 mark set 3 goto process-openwrt-to-wan
@@ -56,8 +77,7 @@ table inet cake-dual-ifb-inet {
 
 	chain process-wan-to-lan {
 
-		oifname br-lan mark set 1
-		oifname br-guest mark set 2
+		oifname $IFACE_NAMES mark set 1
 		
 		# Handle DNS hijacking
 		tcp sport 53 mark set 0
@@ -118,13 +138,12 @@ table bridge cake-dual-ifb-bridge {
 
                 type filter hook input priority filter
 
-                meta pkttype unicast ip daddr != {192.168.1.1/32, 192.168.2.1/32} goto process-lan-to-wan
+                meta pkttype unicast ip daddr != $IFACE_IPS goto process-lan-to-wan
         }
 
         chain process-lan-to-wan {
 
-                ibrname br-lan mark set 1
-                ibrname br-guest mark set 2
+                ibrname $IFACE_NAMES mark set 1
 
                 # Handle DNS hijacking
                 tcp dport 53 mark set 0
@@ -142,12 +161,8 @@ table bridge cake-dual-ifb-bridge {
                 meta l4proto . th dport vmap @rules_proto_dport
 
                 # IoT devices (put mac addresses here)
-                # ibrname br-guest ether saddr {
-                #                                XX,
-                #                                YY
-                #} goto dscp_set_bulk
-
-        }
+                ibrname $IFACE_NAMES ether saddr $BULK_MACS goto dscp_set_bulk
+	}
 
         map rules_proto_dport {
                 type inet_proto . inet_service : verdict
