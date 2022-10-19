@@ -70,8 +70,8 @@ table inet cake-dual-ifb-inet {
 	chain process-lan-to-wan {
 
 		# Handle DNS hijacking (effectively resulting in openwrt-to-wan)
-		tcp dport 53 mark set 3 goto process-openwrt-to-wan
-		udp dport 53 mark set 3 goto process-openwrt-to-wan
+		tcp dport 53 mark set 2 goto process-openwrt-to-wan
+		udp dport 53 mark set 2 goto process-openwrt-to-wan
 
 	}
 
