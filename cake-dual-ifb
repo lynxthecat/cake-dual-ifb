@@ -28,6 +28,7 @@ start()
 		# capture wan -> $iface (egress) and restore DSCPs from conntracks
 		# filter on fwmark 1
 		tc filter add dev $iface parent 1: protocol ip handle 1 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
+
 	done 
 
 	tc qdisc add dev wan handle ffff: ingress
