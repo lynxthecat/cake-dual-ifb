@@ -137,7 +137,8 @@ table bridge cake-dual-ifb-bridge {
 	 chain hook-input {
 
                 type filter hook input priority filter
-
+		
+		# lan->wan
                 meta pkttype unicast ip daddr != $IFACE_IPS goto process-lan-to-wan
         }
 
