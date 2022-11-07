@@ -2,7 +2,7 @@
 
 exec &> /var/log/cake-dual-ifb.log
 
-START=50
+START=91
 STOP=4
 
 # local interfaces to combine flows from
