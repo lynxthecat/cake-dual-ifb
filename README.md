@@ -60,6 +60,7 @@ This script requires at least the following packages:
 - **kmod-sched-core**
 - **kmod-sched-cake**
 - **kmod-sched-ctinfo**
+- **kmod-nft-bridge**
 
 ## Installation on OpenWrt
 
