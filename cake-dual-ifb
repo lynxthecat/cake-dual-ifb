@@ -23,11 +23,11 @@ start()
 
 		# capture $if (ingress) -> wan 
 		# filter on fwmark 1
-		tc filter add dev $iface parent ffff: protocol ip handle 1 fw flowid 1:1 action mirred egress redirect dev ifb-ul
+		tc filter add dev $iface parent ffff: protocol all handle 1 fw flowid 1:1 action mirred egress redirect dev ifb-ul
 
 		# capture wan -> $iface (egress) and restore DSCPs from conntracks
 		# filter on fwmark 1
-		tc filter add dev $iface parent 1: protocol ip handle 1 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
+		tc filter add dev $iface parent 1: protocol all handle 1 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
 
 	done 
 
@@ -36,12 +36,12 @@ start()
 
 	# capture OpenWrt -> wan (egress)
 	# filter by fwmark 2 (use nftables to skip over WireGuard traffic with fwmark 3 and apply fwmark 2 to the remainder)
-	tc filter add dev wan parent 1: protocol ip handle 2 fw flowid 1:1 action mirred egress redirect dev ifb-ul
+	tc filter add dev wan parent 1: protocol all handle 2 fw flowid 1:1 action mirred egress redirect dev ifb-ul
 
 	# capture wan (ingress) -> OpenWrt and restore DSCPs from conntracks
 	# filter on conntrack bit 128 set
- 	tc filter add dev wan parent ffff: prio 1 protocol ip matchall action ctinfo cpmark continue
-	tc filter add dev wan parent ffff: prio 2 protocol ip handle 256/256 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
+ 	tc filter add dev wan parent ffff: prio 1 protocol all matchall action ctinfo cpmark continue
+	tc filter add dev wan parent ffff: prio 2 protocol all handle 256/256 fw flowid 1:1 action ctinfo dscp 63 128 action mirred egress redirect dev ifb-dl
 
 	# apply CAKE on the IFBs
 	tc qdisc add dev ifb-ul root cake bandwidth 30Mbit diffserv4 dual-srchost nonat wash no-ack-filter noatm overhead 92
